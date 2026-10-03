@@ -11,8 +11,8 @@ function showPage(pageId) {
 }
 
 function showPage(pageId) {
-    document.querySelectorAll('.page-section').forEach(el => el.classList.add('d-none'));
-    document.getElementById('page-' + pageId).classList.remove('d-none');
+ document.querySelectorAll('.page-section').forEach(el => el.classList.add('d-none'));
+    document.getElementById('page-' + pageId).classList.remove('d-none');   
     
     // Auto load data saat halaman dibuka
     if(pageId === 'dashboard') loadDashboard();
