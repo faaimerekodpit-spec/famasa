@@ -341,7 +341,56 @@ async function simpanPenagihan() {
 
 
 
+
+
 // Inisialisasi awal
 document.addEventListener('DOMContentLoaded', () => {
     showPage('dashboard');
 });
+
+// --- FITUR TAMBAH ANGGOTA BARU ---
+async function simpanAnggota() {
+    // Ambil nilai dari input form modal
+    const noBuku = document.getElementById('tambahNoBuku').value.trim();
+    const nama = document.getElementById('tambahNama').value.trim();
+    const nik = document.getElementById('tambahNIK').value.trim() || "-";
+    const alamat = document.getElementById('tambahAlamat').value.trim() || "-";
+    const telepon = document.getElementById('tambahTelepon').value.trim() || "-";
+    const status = document.getElementById('tambahStatus').value;
+
+    if (!noBuku || !nama) {
+        return Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Nomor Buku dan Nama Lengkap wajib diisi!' });
+    }
+
+    // Susun array rowData harus persis dengan urutan Header di Sheet 'Anggota'
+    // (A: No_Buku, B: Nama, C: NIK, D: Alamat, E: Telepon, F: Status)
+    const rowData = [noBuku, nama, nik, alamat, telepon, status];
+
+    // Tutup Modal menggunakan API Bootstrap
+    const modalEl = document.getElementById('modalTambahAnggota');
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modal.hide();
+
+    toggleLoading(true);
+
+    try {
+        // Kirim data ke Sheet 'Anggota' menggunakan endpoint 'create'
+        const res = await API.post('create', 'Anggota', rowData);
+        
+        if (res.status === 'success') {
+            Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Anggota baru telah ditambahkan.', timer: 2000 });
+            
+            // Kosongkan form input
+            document.getElementById('formTambahAnggota').reset();
+            
+            // Otomatis refresh tabel anggota agar data baru langsung muncul
+            loadAnggota(); 
+        } else {
+            Swal.fire({ icon: 'error', title: 'Gagal', text: res.message });
+        }
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error Koneksi', text: 'Gagal menyimpan data anggota ke server.' });
+    } finally {
+        toggleLoading(false);
+    }
+}
