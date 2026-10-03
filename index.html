@@ -22,6 +22,7 @@
                     <li class="nav-item"><a class="nav-link active" href="#" onclick="showPage('dashboard')">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('penagihan')">Penagihan Lapangan</a></li>
                     <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('anggota')">Data Anggota</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('laporan')">Laporan</a></li>
                 </ul>
             </div>
         </div>
@@ -89,37 +90,125 @@
                             <p class="mb-0 small">No. Buku: <strong id="infoNoBuku">-</strong> | Status: <span id="infoStatus" class="badge bg-success">Aktif</span></p>
                         </div>
 
-                        <form id="formPenagihan" onsubmit="event.preventDefault(); simpanPenagihan();">
-                            <div class="row g-3">
-                                <div class="col-12 col-md-4">
-                                    <label class="form-label text-muted small">Angsuran Pokok (Rp)</label>
-                                    <input type="number" id="valPokok" class="form-control" value="0" oninput="hitungTotal()" required min="0">
-                                </div>
-                                <div class="col-6 col-md-4">
-                                    <label class="form-label text-muted small">Bunga (Rp)</label>
-                                    <input type="number" id="valBunga" class="form-control" value="0" oninput="hitungTotal()" required min="0">
-                                </div>
-                                <div class="col-6 col-md-4">
-                                    <label class="form-label text-muted small">Denda (Rp)</label>
-                                    <input type="number" id="valDenda" class="form-control" value="0" oninput="hitungTotal()" required min="0">
-                                </div>
-                                <div class="col-12">
-                                    <div class="p-3 bg-light rounded text-center border">
-                                        <span class="text-muted d-block small mb-1">Total Tagihan (Dibayar)</span>
-                                        <h2 class="text-primary fw-bold mb-0" id="valTotal">Rp 0</h2>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label text-muted small">Catatan / Lokasi</label>
-                                    <input type="text" id="valCatatan" class="form-control" placeholder="Opsional...">
-                                </div>
-                                <div class="col-12 mt-4">
-                                    <button type="submit" class="btn btn-success w-100 py-2 fw-bold shadow-sm">
-                                        <i class="bi bi-check-circle"></i> SIMPAN TRANSAKSI
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
+
+
+<form id="formPenagihan" onsubmit="event.preventDefault(); simpanPenagihan();">
+    <!-- Dropdown Pilih Jenis Transaksi -->
+    <div class="mb-4">
+        <label class="form-label fw-bold text-secondary small">Jenis Transaksi</label>
+        <select class="form-select form-select-lg border-primary shadow-sm" id="jenisTransaksi" onchange="toggleJenisTransaksi()" required>
+            <option value="" disabled selected>-- Pilih Jenis Transaksi --</option>
+            <option value="saham">1. Simpanan Saham</option>
+            <option value="non_saham">2. Simpanan Non Saham</option>
+            <option value="angsuran">3. Angsuran Pinjaman</option>
+        </select>
+    </div>
+
+    <!-- WRAPPER FORM (Disembunyikan sampai Jenis Transaksi dipilih) -->
+    <div id="wrapperForm" class="d-none">
+        
+        <!-- SECTION 1: SIMPANAN SAHAM -->
+        <div id="section-saham" class="row g-3 mb-4 d-none">
+            <h6 class="text-primary mb-1 border-bottom pb-2"><i class="bi bi-briefcase"></i> Simpanan Saham</h6>
+            <div class="col-6">
+                <label class="form-label text-muted small">Simpanan Wajib (Rp)</label>
+                <input type="number" id="valWajib" class="form-control" value="0" oninput="hitungTotal()" min="0">
+            </div>
+            <div class="col-6">
+                <label class="form-label text-muted small">SIKAP (Rp)</label>
+                <input type="number" id="valSikap" class="form-control" value="0" oninput="hitungTotal()" min="0">
+            </div>
+        </div>
+
+        <!-- SECTION 2: SIMPANAN NON SAHAM -->
+        <div id="section-non-saham" class="mb-4 d-none">
+            <h6 class="text-success mb-1 border-bottom pb-2"><i class="bi bi-piggy-bank"></i> Simpanan Non Saham</h6>
+            <label class="form-label text-muted small mb-3">Pilih Jenis Simpanan (Bisa Lebih dari Satu):</label>
+            <div class="row g-3">
+                <!-- Sibuhar -->
+                <div class="col-12 col-md-6">
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="checkSibuhar" onchange="toggleNonSaham('Sibuhar')">
+                        <label class="form-check-label" for="checkSibuhar">Sibuhar</label>
+                    </div>
+                    <div id="divValSibuhar" class="d-none">
+                        <input type="number" id="valSibuhar" class="form-control" value="0" oninput="hitungTotal()" min="0">
+                    </div>
+                </div>
+                <!-- Sisuka -->
+                <div class="col-12 col-md-6">
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="checkSisuka" onchange="toggleNonSaham('Sisuka')">
+                        <label class="form-check-label" for="checkSisuka">Sisuka</label>
+                    </div>
+                    <div id="divValSisuka" class="d-none">
+                        <input type="number" id="valSisuka" class="form-control" value="0" oninput="hitungTotal()" min="0">
+                    </div>
+                </div>
+                <!-- Simapan -->
+                <div class="col-12 col-md-6">
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="checkSimapan" onchange="toggleNonSaham('Simapan')">
+                        <label class="form-check-label" for="checkSimapan">Simapan</label>
+                    </div>
+                    <div id="divValSimapan" class="d-none">
+                        <input type="number" id="valSimapan" class="form-control" value="0" oninput="hitungTotal()" min="0">
+                    </div>
+                </div>
+                <!-- Sipendik -->
+                <div class="col-12 col-md-6">
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="checkSipendik" onchange="toggleNonSaham('Sipendik')">
+                        <label class="form-check-label" for="checkSipendik">Sipendik</label>
+                    </div>
+                    <div id="divValSipendik" class="d-none">
+                        <input type="number" id="valSipendik" class="form-control" value="0" oninput="hitungTotal()" min="0">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: ANGSURAN PINJAMAN -->
+        <div id="section-angsuran" class="row g-3 mb-4 d-none">
+            <h6 class="text-danger mb-1 border-bottom pb-2"><i class="bi bi-cash-stack"></i> Angsuran Pinjaman</h6>
+            <div class="col-12 col-md-4">
+                <label class="form-label text-muted small">Angsuran Pokok (Rp)</label>
+                <input type="number" id="valPokok" class="form-control" value="0" oninput="hitungTotal()" min="0">
+            </div>
+            <div class="col-6 col-md-4">
+                <label class="form-label text-muted small">Bunga (Rp)</label>
+                <input type="number" id="valBunga" class="form-control" value="0" oninput="hitungTotal()" min="0">
+            </div>
+            <div class="col-6 col-md-4">
+                <label class="form-label text-muted small">Denda (Rp) - <i>Opsional</i></label>
+                <input type="number" id="valDenda" class="form-control" value="0" oninput="hitungTotal()" min="0">
+            </div>
+        </div>
+        
+        <!-- BAGIAN BAWAH: TOTAL & TOMBOL SIMPAN -->
+        <div class="row g-3">
+            <div class="col-12">
+                <div class="p-3 bg-light rounded text-center border">
+                    <span class="text-muted d-block small mb-1" id="labelTotal">Total Transaksi</span>
+                    <h2 class="text-primary fw-bold mb-0" id="valTotal">Rp 0</h2>
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label text-muted small">Catatan / Lokasi</label>
+                <input type="text" id="valCatatan" class="form-control" placeholder="Tulis keterangan (Opsional)...">
+            </div>
+            <div class="col-12 mt-4">
+                <button type="submit" class="btn btn-success w-100 py-3 fw-bold shadow-sm">
+                    <i class="bi bi-check-circle"></i> SIMPAN TRANSAKSI
+                </button>
+            </div>
+        </div>
+
+    </div>
+</form>
+
+
+
                     </div>
                 </div>
             </div>
@@ -144,6 +233,77 @@
                         </thead>
                         <tbody id="tableAnggotaBody">
                             <tr><td colspan="4" class="text-center text-muted p-3">Silakan refresh untuk memuat data.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-laporan" class="page-section d-none">
+            <h4 class="mb-3 text-secondary">Laporan Hasil Penagihan</h4>
+            
+            <!-- Ringkasan Laporan -->
+            <div class="row g-2 mb-3">
+                <div class="col-6 col-md-3">
+                    <div class="p-3 bg-white border rounded shadow-sm text-center">
+                        <span class="d-block small text-muted">Total Saham</span>
+                        <strong class="text-primary fs-5" id="rek-saham">Rp 0</strong>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-3 bg-white border rounded shadow-sm text-center">
+                        <span class="d-block small text-muted">Total Non Saham</span>
+                        <strong class="text-success fs-5" id="rek-nonsaham">Rp 0</strong>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-3 bg-white border rounded shadow-sm text-center">
+                        <span class="d-block small text-muted">Total Angsuran</span>
+                        <strong class="text-danger fs-5" id="rek-angsuran">Rp 0</strong>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-3 bg-primary-custom text-white border rounded shadow-sm text-center">
+                        <span class="d-block small text-white-50">Total Keseluruhan</span>
+                        <strong class="fs-5" id="rek-total">Rp 0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fitur Pencarian & Filter -->
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-12 col-md-8">
+                            <input type="text" id="filterPencarian" class="form-control" placeholder="Cari Nama, No Buku, atau Petugas..." onkeyup="renderTabelLaporan()">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <select id="filterJenis" class="form-select" onchange="renderTabelLaporan()">
+                                <option value="Semua">Semua Jenis Transaksi</option>
+                                <option value="Simpanan Saham">Simpanan Saham</option>
+                                <option value="Simpanan Non Saham">Simpanan Non Saham</option>
+                                <option value="Angsuran Pinjaman">Angsuran Pinjaman</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabel Laporan -->
+            <div class="card border-0 shadow-sm overflow-auto">
+                <div class="card-body p-0">
+                    <table class="table table-hover align-middle mb-0" style="min-width: 600px;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tanggal & ID</th>
+                                <th>Anggota</th>
+                                <th>Jenis Transaksi</th>
+                                <th>Nominal</th>
+                                <th>Petugas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableLaporanBody">
+                            <tr><td colspan="5" class="text-center text-muted p-3">Silakan refresh untuk memuat data.</td></tr>
                         </tbody>
                     </table>
                 </div>
