@@ -1,17 +1,9 @@
 // File: js/app.js
 
 // --- 1. Sistem Navigasi SPA Sederhana ---
+// (Perbaikan: Menghapus duplikasi fungsi showPage dan menggabungkannya)
 function showPage(pageId) {
     document.querySelectorAll('.page-section').forEach(el => el.classList.add('d-none'));
-    document.getElementById('page-' + pageId).classList.remove('d-none');
-    
-    // Auto load data saat halaman dibuka
-    if(pageId === 'dashboard') loadDashboard();
-    if(pageId === 'anggota') loadAnggota();
-}
-
-function showPage(pageId) {
- document.querySelectorAll('.page-section').forEach(el => el.classList.add('d-none'));
     document.getElementById('page-' + pageId).classList.remove('d-none');   
     
     // Auto load data saat halaman dibuka
@@ -27,7 +19,8 @@ const formatRp = (angka) => {
 
 // Menampilkan / Menyembunyikan Loading
 const toggleLoading = (show) => {
-    document.getElementById('loading').classList.toggle('d-none', !show);
+    const loadingEl = document.getElementById('loading');
+    if(loadingEl) loadingEl.classList.toggle('d-none', !show);
 }
 
 // --- 2. Fitur Modul Dashboard ---
@@ -53,14 +46,14 @@ let dataLaporanGlobal = []; // Menyimpan data master agar tidak perlu fetch beru
 async function loadLaporan() {
     toggleLoading(true);
     const tbody = document.getElementById('tableLaporanBody');
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted p-3">Memuat data laporan...</td></tr>';
+    if(tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted p-3">Memuat data laporan...</td></tr>';
     
     try {
         const res = await API.get('getLaporan');
         dataLaporanGlobal = res; // Simpan ke variabel global
         renderTabelLaporan();    // Panggil fungsi render
     } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger p-3">Gagal memuat data.</td></tr>';
+        if(tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger p-3">Gagal memuat data.</td></tr>';
         console.error(e);
     } finally {
         toggleLoading(false);
@@ -69,9 +62,13 @@ async function loadLaporan() {
 
 function renderTabelLaporan() {
     const tbody = document.getElementById('tableLaporanBody');
-    const keyword = document.getElementById('filterPencarian').value.toLowerCase();
-    const filterJenis = document.getElementById('filterJenis').value;
+    const filterPencarianEl = document.getElementById('filterPencarian');
+    const filterJenisEl = document.getElementById('filterJenis');
     
+    const keyword = filterPencarianEl ? filterPencarianEl.value.toLowerCase() : "";
+    const filterJenis = filterJenisEl ? filterJenisEl.value : "Semua";
+    
+    if(!tbody) return;
     tbody.innerHTML = '';
     
     let totalSaham = 0;
@@ -135,8 +132,6 @@ function renderTabelLaporan() {
     document.getElementById('rek-total').innerText = formatRp(totalKeseluruhan);
 }
 
-// Menambahkan Reset Dropdown pada fungsi searchAnggota()
-// Cari fungsi searchAnggota() sebelumnya dan tambahkan kode reset dropdown ini:
 async function searchAnggota() {
     const noBuku = document.getElementById('inputNoBuku').value.trim();
     if (!noBuku) return;
@@ -169,20 +164,28 @@ async function searchAnggota() {
     }
 }
 
-// --- LOGIKA FORM DINAMIS (TAMBAHKAN KODE INI) ---
-
+// --- LOGIKA FORM DINAMIS ---
 function resetSemuaInput() {
     // Reset Nilai
     const inputs = ['valWajib', 'valSikap', 'valPokok', 'valBunga', 'valDenda', 'valSibuhar', 'valSisuka', 'valSimapan', 'valSipendik'];
-    inputs.forEach(id => document.getElementById(id).value = 0);
+    inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.value = 0;
+    });
     
     // Reset Checkbox
     const checkboxes = ['checkSibuhar', 'checkSisuka', 'checkSimapan', 'checkSipendik'];
-    checkboxes.forEach(id => document.getElementById(id).checked = false);
+    checkboxes.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.checked = false;
+    });
     
     // Sembunyikan Input Non Saham
     const divs = ['divValSibuhar', 'divValSisuka', 'divValSimapan', 'divValSipendik'];
-    divs.forEach(id => document.getElementById(id).classList.add('d-none'));
+    divs.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.classList.add('d-none');
+    });
 
     document.getElementById('valCatatan').value = '';
     document.getElementById('valTotal').innerText = 'Rp 0';
@@ -337,17 +340,6 @@ async function simpanPenagihan() {
     }
 }
 
-
-
-
-
-
-
-// Inisialisasi awal
-document.addEventListener('DOMContentLoaded', () => {
-    showPage('dashboard');
-});
-
 // --- FITUR TAMBAH ANGGOTA BARU ---
 async function simpanAnggota() {
     // Ambil nilai dari input form modal
@@ -394,3 +386,27 @@ async function simpanAnggota() {
         toggleLoading(false);
     }
 }
+
+// TAMBAHAN: Fungsi Load Anggota agar tidak error saat tab Anggota diklik
+async function loadAnggota() {
+    const tbody = document.getElementById('tableAnggotaBody');
+    if(tbody) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">Memuat data anggota...</td></tr>';
+        try {
+            const res = await API.get('getAnggota'); 
+            // Implementasikan logic render tabel anggota Anda disini
+            // Contoh jika sukses tapi data kosong:
+            if(!res || res.length === 0) {
+                 tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">Tidak ada data.</td></tr>';
+            }
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger p-3">Gagal memuat data anggota.</td></tr>';
+            console.log(e);
+        }
+    }
+}
+
+// Inisialisasi awal
+document.addEventListener('DOMContentLoaded', () => {
+    showPage('dashboard');
+});
