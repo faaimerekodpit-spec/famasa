@@ -1,11 +1,17 @@
 // File: js/app.js
 
 // --- 1. Sistem Navigasi SPA Sederhana ---
-// (Perbaikan: Menghapus duplikasi fungsi showPage dan menggabungkannya)
+// (Perbaikan: Menghapus duplikasi fungsi showPage dan menggabungkannya, 
+//  serta menambahkan active state pada navbar)
 function showPage(pageId) {
     document.querySelectorAll('.page-section').forEach(el => el.classList.add('d-none'));
     document.getElementById('page-' + pageId).classList.remove('d-none');   
     
+    // Update Active Class pada Navbar (Jika sudah ditambahkan di HTML)
+    document.querySelectorAll('.nav-menu-item').forEach(el => el.classList.remove('active-nav'));
+    const activeLink = document.querySelector(`.nav-link[onclick="showPage('${pageId}')"]`);
+    if(activeLink) activeLink.classList.add('active-nav');
+
     // Auto load data saat halaman dibuka
     if(pageId === 'dashboard') loadDashboard();
     if(pageId === 'anggota') loadAnggota();
@@ -46,14 +52,14 @@ let dataLaporanGlobal = []; // Menyimpan data master agar tidak perlu fetch beru
 async function loadLaporan() {
     toggleLoading(true);
     const tbody = document.getElementById('tableLaporanBody');
-    if(tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted p-3">Memuat data laporan...</td></tr>';
+    if(tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted p-3"><div class="spinner-border spinner-border-sm text-primary"></div> Memuat data laporan...</td></tr>';
     
     try {
         const res = await API.get('getLaporan');
         dataLaporanGlobal = res; // Simpan ke variabel global
         renderTabelLaporan();    // Panggil fungsi render
     } catch (e) {
-        if(tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger p-3">Gagal memuat data.</td></tr>';
+        if(tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger p-3"><i class="bi bi-exclamation-triangle"></i> Gagal memuat data.</td></tr>';
         console.error(e);
     } finally {
         toggleLoading(false);
@@ -387,20 +393,43 @@ async function simpanAnggota() {
     }
 }
 
-// TAMBAHAN: Fungsi Load Anggota agar tidak error saat tab Anggota diklik
+// TAMBAHAN: Fungsi Load Anggota yang sudah disempurnakan logikanya
 async function loadAnggota() {
     const tbody = document.getElementById('tableAnggotaBody');
     if(tbody) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">Memuat data anggota...</td></tr>';
+        // Menambahkan animasi spinner agar UI terlihat lebih dinamis dan profesional
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-4"><div class="spinner-border spinner-border-sm text-primary"></div> Memuat data anggota...</td></tr>';
+        
         try {
             const res = await API.get('getAnggota'); 
-            // Implementasikan logic render tabel anggota Anda disini
-            // Contoh jika sukses tapi data kosong:
+            tbody.innerHTML = ''; // Mengosongkan tabel setelah loading selesai
+
+            // Validasi jika array kosong atau undefined
             if(!res || res.length === 0) {
-                 tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">Tidak ada data.</td></tr>';
+                 tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-4">Tidak ada data anggota yang tersimpan.</td></tr>';
+                 return;
             }
+
+            // Melakukan perulangan untuk membangun baris tabel (Render data dari server)
+            res.forEach(item => {
+                // Menentukan warna badge untuk status
+                const statusBadge = item.Status === 'Aktif' ? 'bg-success' : 'bg-danger';
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="fw-bold text-primary">${item.No_Buku}</td>
+                        <td>
+                            <div class="fw-bold">${item.Nama}</div>
+                            <div class="small text-muted">${item.Alamat || '-'}</div>
+                        </td>
+                        <td>${item.Telepon || '-'}</td>
+                        <td><span class="badge ${statusBadge}">${item.Status}</span></td>
+                    </tr>
+                `;
+            });
+
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger p-3">Gagal memuat data anggota.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger p-4"><i class="bi bi-exclamation-triangle"></i> Gagal memuat data anggota. Pastikan koneksi dan API Google Script berjalan.</td></tr>';
             console.log(e);
         }
     }
